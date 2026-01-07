@@ -1,0 +1,51 @@
+# Check duplicates
+duplicate_count = df.duplicated().sum()
+print(f"Duplicate rows found: {duplicate_count}")
+
+# Remove duplicates
+df = df.drop_duplicates()
+print(f"Shape after removing duplicates: {df.shape}")
+
+price_cols = ["open", "high", "low", "close"]
+
+existing_price_cols = [col for col in price_cols if col in df.columns]
+
+if len(existing_price_cols) >= 4:
+    invalid_prices = df[
+        (df["high"] < df["low"]) |
+        (df["open"] < df["low"]) |
+        (df["open"] > df["high"]) |
+        (df["close"] < df["low"]) |
+        (df["close"] > df["high"])
+    ]
+
+    print(f"Invalid price rows found: {len(invalid_prices)}")
+
+    # Drop invalid rows (data corruption)
+    df = df.drop(invalid_prices.index)
+else:
+    print("Price columns incomplete — skipping logical validation.")
+def cap_outliers_iqr(data, column):
+    Q1 = data[column].quantile(0.25)
+    Q3 = data[column].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower = Q1 - 1.5 * IQR
+    upper = Q3 + 1.5 * IQR
+
+    data[column] = np.where(
+        data[column] < lower, lower,
+        np.where(data[column] > upper, upper, data[column])
+    )
+
+# Apply to numeric columns
+numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns
+
+for col in numeric_cols:
+    if col != "volume":  # volume can be naturally extreme
+        cap_outliers_iqr(df, col)
+print("Final shape after integrity checks:")
+print(df.shape)
+
+print("\nAny missing values left?")
+print(df.isnull().sum().sum())
