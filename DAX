@@ -1,0 +1,26 @@
+dim_stock = df[["symbol"]].drop_duplicates().reset_index(drop=True)
+dim_date = pd.DataFrame()
+dim_date["date"] = pd.to_datetime(df["date"].unique())
+
+dim_date["year"] = dim_date["date"].dt.year
+dim_date["month"] = dim_date["date"].dt.month
+dim_date["month_name"] = dim_date["date"].dt.month_name()
+dim_date["quarter"] = dim_date["date"].dt.to_period("Q").astype(str)
+dim_date["day"] = dim_date["date"].dt.day
+dim_date["day_name"] = dim_date["date"].dt.day_name()
+fact_market = df[[
+    "symbol",
+    "date",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "daily_price_change",
+    "daily_return_pct",
+    "volatility_7d",
+    "ma_7",
+    "ma_21",
+    "trend_signal",
+    "positive_day"
+]]
