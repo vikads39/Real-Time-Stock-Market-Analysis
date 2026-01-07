@@ -1,0 +1,23 @@
+# Ensure correct order for time-series calculations
+sort_cols = []
+
+if "symbol" in df.columns:
+    sort_cols.append("symbol")
+
+for col in df.columns:
+    if "date" in col:
+        sort_cols.append(col)
+        break
+
+df = df.sort_values(sort_cols).reset_index(drop=True)
+df["daily_price_change"] = df.groupby("symbol")["close"].diff()
+df["volatility_7d"] = (
+    df.groupby("symbol")["daily_return_pct"]
+    .rolling(window=7)
+    .std()
+    .reset_index(level=0, drop=True)
+)
+df["trend_signal"] = np.where(df["ma_7"] > df["ma_21"], "uptrend", "downtrend")
+
+df["positive_day"] = np.where(df["daily_return_pct"] > 0, 1, 0)
+df.fillna(0, inplace=True)
